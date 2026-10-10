@@ -95,9 +95,11 @@ export const AuthProvider: React.FC<{
   const loadAuthenticatedUserData = async (
     authenticatedUser: User
   ) => {
+    const currentUserId = String(authenticatedUser.id);
+
     if (authenticatedUser.role === 'ROLE_STUDENT') {
       try {
-        const profile = await api.getStudentProfile();
+        const profile = await api.getStudentProfile(currentUserId);
         setStudentProfile(profile);
       } catch (error) {
         console.error('Could not load student profile:', error);
@@ -108,7 +110,7 @@ export const AuthProvider: React.FC<{
     }
 
     try {
-      const result = await api.getNotifications();
+      const result = await api.getNotifications(currentUserId);
       setNotifications(Array.isArray(result) ? result : []);
     } catch (error) {
       console.error('Could not load notifications:', error);
@@ -126,7 +128,6 @@ export const AuthProvider: React.FC<{
     }
 
     saveAuthentication(authenticatedUser, token);
-
     await loadAuthenticatedUserData(authenticatedUser);
   };
 
@@ -176,7 +177,6 @@ export const AuthProvider: React.FC<{
     }
 
     try {
-      // The Spring Boot login endpoint accepts email and password.
       const response = await api.login({
         email: cleanEmail,
         password,
@@ -301,7 +301,7 @@ export const AuthProvider: React.FC<{
     }
 
     try {
-      const profile = await api.getStudentProfile();
+      const profile = await api.getStudentProfile(String(user.id));
       setStudentProfile(profile);
     } catch (error) {
       console.error('Could not refresh student profile:', error);
@@ -315,7 +315,7 @@ export const AuthProvider: React.FC<{
     }
 
     try {
-      const result = await api.getNotifications();
+      const result = await api.getNotifications(String(user.id));
       setNotifications(Array.isArray(result) ? result : []);
     } catch (error) {
       console.error('Could not refresh notifications:', error);
@@ -334,7 +334,7 @@ export const AuthProvider: React.FC<{
 
     const interval = window.setInterval(() => {
       void refreshNotifications();
-    }, 5000);
+    }, 10000); // 10s polling interval
 
     return () => window.clearInterval(interval);
   }, [user?.id, role]);
