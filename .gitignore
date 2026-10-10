@@ -1,6 +1,7 @@
 node_modules/
-dist/
+project/
 .env
 .env.*
 !.env.example
 *.log
+project.tar.gz
