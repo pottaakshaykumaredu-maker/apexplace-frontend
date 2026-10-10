@@ -13,6 +13,11 @@ import {
 } from '../types';
 
 // =========================================================
+// BASE BACKEND URL
+// =========================================================
+const BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://ai-backend-production-38bd.up.railway.app';
+
+// =========================================================
 // ERROR HANDLING
 // =========================================================
 
@@ -48,7 +53,7 @@ const getId = (
 // =========================================================
 
 const request = async <T>(
-  url: string,
+  endpoint: string,
   options: RequestInit = {},
   fallback = 'Request failed.'
 ): Promise<T> => {
@@ -68,7 +73,10 @@ const request = async <T>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(url, {
+  // Ensure full URL is formed using the live Spring Boot backend
+  const targetUrl = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
+
+  const response = await fetch(targetUrl, {
     ...options,
     headers,
   });
