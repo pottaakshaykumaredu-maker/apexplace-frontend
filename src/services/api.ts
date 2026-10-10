@@ -39,13 +39,28 @@ const getErrorMessage = async (
 };
 
 // =========================================================
-// ID NORMALIZATION
+// ID NORMALIZATION & HELPERS
 // =========================================================
 
 const getId = (
   value: string | number | undefined | null
 ): string => {
   return value == null || value === '' ? '' : String(value);
+};
+
+const getCurrentUserId = (): string => {
+  try {
+    const stored = localStorage.getItem('auth_user') || localStorage.getItem('user');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed?.id != null) {
+        return String(parsed.id);
+      }
+    }
+  } catch {
+    // Ignore storage parse errors
+  }
+  return '';
 };
 
 // =========================================================
@@ -118,8 +133,6 @@ const jsonOptions = (
 export const api = {
   // =======================================================
   // AUTHENTICATION - LOGIN
-  // Backend response: { token, id, name, email, role }
-  // Frontend response: { token, user: { id, name, email, role } }
   // =======================================================
 
   async login(data: {
@@ -288,8 +301,9 @@ export const api = {
   async getStudentProfile(
     userId?: string
   ): Promise<StudentProfile> {
-    const query = userId
-      ? `?userId=${encodeURIComponent(userId)}`
+    const targetUserId = userId || getCurrentUserId();
+    const query = targetUserId
+      ? `?userId=${encodeURIComponent(targetUserId)}`
       : '';
 
     return request(
@@ -351,8 +365,9 @@ export const api = {
     const formData = new FormData();
     formData.append('resume', file, file.name);
 
-    const query = userId
-      ? `?userId=${encodeURIComponent(userId)}`
+    const targetUserId = userId || getCurrentUserId();
+    const query = targetUserId
+      ? `?userId=${encodeURIComponent(targetUserId)}`
       : '';
 
     return request(
@@ -571,9 +586,10 @@ export const api = {
   async getNotifications(
     userId?: string
   ): Promise<NotificationItem[]> {
-    const query = userId
-      ? `?userId=${encodeURIComponent(userId)}`
-      : '?userId=all';
+    const targetUserId = userId || getCurrentUserId();
+    const query = targetUserId && targetUserId !== 'all'
+      ? `?userId=${encodeURIComponent(targetUserId)}`
+      : '';
 
     return request(
       `/api/notifications${query}`,
@@ -599,9 +615,10 @@ export const api = {
   async markAllNotificationsRead(
     userId?: string
   ): Promise<void> {
+    const targetUserId = userId || getCurrentUserId();
     const numericUserId =
-      userId && Number.isFinite(Number(userId))
-        ? Number(userId)
+      targetUserId && Number.isFinite(Number(targetUserId))
+        ? Number(targetUserId)
         : undefined;
 
     return request(
